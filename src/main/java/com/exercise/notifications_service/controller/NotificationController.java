@@ -1,3 +1,4 @@
+// Notifications REST API - handles budget alerts and weekly reminders
 package com.exercise.notifications_service.controller;
 
 import com.exercise.notifications_service.model.Notification;
