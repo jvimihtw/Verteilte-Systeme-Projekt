@@ -22,7 +22,7 @@ target/
 .sts4-cache
 
 ### IntelliJ IDEA ###
-.idea
+budget-service/.idea
 *.iws
 *.iml
 *.ipr
