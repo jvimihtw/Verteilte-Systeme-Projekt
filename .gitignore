@@ -1,7 +1,9 @@
-## compiled output
+## Node / NestJS
 /dist
 /node_modules
 /build
+.temp
+.tmp
 
 ## Logs
 logs
@@ -12,32 +14,53 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
-## OS
-.DS_Store
-
-## Tests
-/coverage
-/.nyc_output
-
-## IDEs and editors
-/.idea
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-## VSCode
-.vscode/*
-
-## dotenv
+## Environment
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
 
-## temp
-.temp
-.tmp
+## Tests
+/coverage
+/.nyc_output
+
+## Java / Spring Boot / Maven
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+HELP.md
+
+## Prisma
+/generated/prisma
+
+## IDEs
+/.idea
+.idea/
+*.iws
+*.iml
+*.ipr
+.project
+.classpath
+.factorypath
+.settings/
+.springBeans
+.sts4-cache
+.c9/
+*.launch
+*.sublime-workspace
+.vscode/
+.vscode/*
+
+## OS
+.DS_Store
+
+## NetBeans
+/nbproject/private/
+/nbbuild/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
