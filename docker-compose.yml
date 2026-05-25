@@ -1,0 +1,84 @@
+version: "3.9"
+
+services:
+
+  # ── PostgreSQL (for budget-service) ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: budgetdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── User Service (Node.js) ───────────────────────────────────────────────────
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+
+  # ── Expenses Service (Django) ────────────────────────────────────────────────
+  expenses:
+    build:
+      context: ./expenses
+      dockerfile: Dockerfile
+    container_name: expenses-service
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  # ── Budget Service (NestJS + PostgreSQL) ─────────────────────────────────────
+  budget-service:
+    build:
+      context: ./budget-service
+      dockerfile: Dockerfile
+    container_name: budget-service
+    ports:
+      - "3003:3003"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/budgetdb
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ── Notifications Service (Spring Boot) ──────────────────────────────────────
+  notifications-service:
+    build:
+      context: ./notifications-service
+      dockerfile: Dockerfile
+    container_name: notifications-service
+    ports:
+      - "3004:3004"
+    restart: unless-stopped
+
+  # ── Gateway Service (NestJS) ─────────────────────────────────────────────────
+  gateway-service:
+    build:
+      context: ./gateway-service
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "3000:3000"
+    depends_on:
+      - user-service
+      - expenses
+      - budget-service
+      - notifications-service
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
