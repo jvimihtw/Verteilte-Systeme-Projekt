@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
 
-  # ── PostgreSQL (for budget-service) ─────────────────────────────────────────
   postgres:
     image: postgres:16-alpine
     container_name: postgres
@@ -20,7 +19,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── User Service (Node.js) ───────────────────────────────────────────────────
   user-service:
     build:
       context: ./user-service
@@ -30,7 +28,6 @@ services:
       - "3001:3001"
     restart: unless-stopped
 
-  # ── Expenses Service (Django) ────────────────────────────────────────────────
   expenses:
     build:
       context: ./expenses
@@ -40,7 +37,6 @@ services:
       - "3002:3002"
     restart: unless-stopped
 
-  # ── Budget Service (NestJS + PostgreSQL) ─────────────────────────────────────
   budget-service:
     build:
       context: ./budget-service
@@ -55,7 +51,6 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # ── Notifications Service (Spring Boot) ──────────────────────────────────────
   notifications-service:
     build:
       context: ./notifications-service
@@ -65,7 +60,6 @@ services:
       - "3004:3004"
     restart: unless-stopped
 
-  # ── Gateway Service (NestJS) ─────────────────────────────────────────────────
   gateway-service:
     build:
       context: ./gateway-service
