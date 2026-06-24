@@ -49,13 +49,13 @@ export class GatewayController {
   // ── Expenses endpoints ──────────────────────────────────────────────────────
   @Get('expenses')
   async getExpenses() {
-    const response = await axios.get(`${SERVICES.expenses}/expenses`);
+    const response = await axios.get(`${SERVICES.expenses}/expenses/`);
     return response.data;
   }
 
   @Post('expenses')
   async createExpense(@Body() body: any) {
-    const response = await axios.post(`${SERVICES.expenses}/expenses`, body);
+    const response = await axios.post(`${SERVICES.expenses}/expenses/`, body);
     return response.data;
   }
 
