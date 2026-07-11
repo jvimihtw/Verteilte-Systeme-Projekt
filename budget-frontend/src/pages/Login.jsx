@@ -18,11 +18,17 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await login(email, password);
-      loginUser(result.data || result);
+
+      if (result.token) {
+        localStorage.setItem("token", result.token);
+      }
+
+      loginUser(result.user || result.data?.user || result);
+
       navigate("/");
     } catch (err) {
       setError(
-        err.response?.data?.error || "Couldn't sign in. Check your details and try again."
+        err.response?.data?.message || "Couldn't sign in. Check your details and try again."
       );
     } finally {
       setLoading(false);

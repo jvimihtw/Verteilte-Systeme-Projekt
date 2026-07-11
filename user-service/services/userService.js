@@ -1,4 +1,8 @@
 const userRepository = require("../repositories/userRepository");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = "password_123";
 
 function removePassword(user) {
   return {
@@ -8,13 +12,13 @@ function removePassword(user) {
   };
 }
 
-function getAllUsers() {
-  const users = userRepository.findAllUsers();
+async function getAllUsers() {
+  const users = await userRepository.findAllUsers();
 
   return users.map(removePassword);
 }
 
-function createUser(userData) {
+async function createUser(userData) {
   if (!userData.name || !userData.email || !userData.password) {
     return {
       error: true,
@@ -23,8 +27,21 @@ function createUser(userData) {
     };
   }
 
-  const newUser = userRepository.createUser(userData);
+  const userExists = await userRepository.findUserByEmail(userData.email);
+  if (userExists) {
+    return {
+      error: true,
+      status: 400,
+        message: "The email address is already registered to another account."
+    };
+  }
 
+  const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+  const newUser = await userRepository.createUser({
+    ...userData,
+    password: hashedPassword
+  });
   return {
     error: false,
     status: 201,
@@ -33,7 +50,7 @@ function createUser(userData) {
   };
 }
 
-function login(email, password) {
+async function login(email, password) {
   if (!email || !password) {
     return {
       error: true,
@@ -42,9 +59,17 @@ function login(email, password) {
     };
   }
 
-  const foundUser = userRepository.findUserByEmailAndPassword(email, password);
-
+  const foundUser = await userRepository.findUserByEmail(email);
   if (!foundUser) {
+    return {
+      error: true,
+      status: 404,
+      message: "Account does not exist"
+    };
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, foundUser.password);
+  if (!isPasswordValid) {
     return {
       error: true,
       status: 401,
@@ -52,16 +77,23 @@ function login(email, password) {
     };
   }
 
+  const token = jwt.sign(
+    { id: foundUser.id, email: foundUser.email },
+    JWT_SECRET,
+    { expiresIn: "1h" }
+  );
+
   return {
     error: false,
     status: 200,
     message: "Login successful",
+    token: token,
     user: removePassword(foundUser)
   };
 }
 
-function deleteUser(id) {
-  const wasDeleted = userRepository.deleteUserById(id);
+async function deleteUser(id) {
+  const wasDeleted = await userRepository.deleteUserById(id);
 
   if (!wasDeleted) {
     return {

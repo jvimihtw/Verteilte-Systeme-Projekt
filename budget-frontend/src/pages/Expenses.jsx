@@ -15,7 +15,7 @@ export default function Expenses() {
     setLoading(true);
     try {
       const result = await getExpenses();
-      setExpenses(result.data || []);
+      setExpenses(Array.isArray(result) ? result : result.data || []);
       setErrorMsg("");
     } catch (err) {
       setErrorMsg("Couldn't load expenses. Is the expenses service running?");

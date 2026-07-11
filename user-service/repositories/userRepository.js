@@ -1,40 +1,45 @@
-const users = require("../data/usersData");
+const pool = require("../db");
 
-function findAllUsers() {
-  return users;
+async function findAllUsers() {
+  const result = await pool.query(
+    "SELECT id, name, email FROM users ORDER BY id"
+  );
+
+  return result.rows;
 }
 
-function findUserByEmailAndPassword(email, password) {
-  return users.find(user => user.email === email && user.password === password);
+async function findUserByEmail(email) {
+  const result = await pool.query(
+    "SELECT * FROM users WHERE email=$1",
+    [email]
+  );
+
+  return result.rows[0];
 }
 
-function createUser(userData) {
-  const newUser = {
-    id: users.length + 1,
-    name: userData.name,
-    email: userData.email,
-    password: userData.password
-  };
+async function createUser(userData) {
+  const result = await pool.query(
+    `INSERT INTO users(name,email,password)
+     VALUES($1,$2,$3)
+     RETURNING id,name,email,password`,
+    [userData.name, userData.email, userData.password]
+  );
 
-  users.push(newUser);
-
-  return newUser;
+  return result.rows[0];
 }
 
-function deleteUserById(id) {
-  const index = users.findIndex(user => user.id === id);
+async function deleteUserById(id) {
+  const result = await pool.query(
+    "DELETE FROM users WHERE id=$1",
+    [id]
+  );
 
-  if (index === -1) {
-    return false;
-  }
-
-  users.splice(index, 1);
-  return true;
+  return result.rowCount > 0;
 }
 
 module.exports = {
   findAllUsers,
-  findUserByEmailAndPassword,
+  findUserByEmail,
   createUser,
   deleteUserById
 };

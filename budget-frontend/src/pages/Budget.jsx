@@ -17,10 +17,10 @@ export default function Budget() {
     try {
       const [bud, exp] = await Promise.all([getBudgets(), getExpenses()]);
       setBudgets(Array.isArray(bud) ? bud : bud.data || []);
-      setExpenses(exp.data || []);
+      setExpenses(Array.isArray(exp) ? exp : exp.data || []);
       setErrorMsg("");
     } catch (err) {
-      setErrorMsg("Couldn't load budgets. Is the budget service running?");
+      setErrorMsg("Couldn't load your data. Is the microservice running?");
     } finally {
       setLoading(false);
     }
@@ -39,12 +39,16 @@ export default function Budget() {
   async function handleAdd(e) {
     e.preventDefault();
     try {
-      await createBudget({ category, maxAmount: Number(limit), userId: 1 });
+      await createBudget({
+        category: category,
+        maxAmount: Number(limit)
+      });
+
       setLimit("");
       setShowForm(false);
       loadData();
     } catch (err) {
-      setErrorMsg("Couldn't create the budget. Try again.");
+      setErrorMsg("Couldn't create the budget. Please try again.");
     }
   }
 

@@ -3,18 +3,28 @@ import axios from "axios";
 // All requests go through the gateway, which forwards to the right service.
 // Gateway runs on port 3000 — see gateway-service/src/gateway/gateway.controller.ts
 const GATEWAY_URL = "http://localhost:3000";
+const USER_SERVICE_URL = "http://localhost:3001";
 
 const api = axios.create({
   baseURL: GATEWAY_URL,
   headers: { "Content-Type": "application/json" },
 });
 
+// ── Axios interceptor ───────────────────────────────────────────────────
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 // ── Auth / Users ────────────────────────────────────────────────────────────
 export const login = (email, password) =>
-  api.post("/login", { email, password }).then((r) => r.data);
+  axios.post(`${USER_SERVICE_URL}/login`, { email, password }).then((r) => r.data);
 
 export const register = (name, email, password) =>
-  api.post("/users", { name, email, password }).then((r) => r.data);
+  axios.post(`${USER_SERVICE_URL}/users`, { name, email, password }).then((r) => r.data);
 
 // ── Expenses ─────────────────────────────────────────────────────────────────
 export const getExpenses = () => api.get("/api/expenses").then((r) => r.data);

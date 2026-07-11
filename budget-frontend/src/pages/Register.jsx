@@ -20,7 +20,7 @@ export default function Register() {
       navigate("/login");
     } catch (err) {
       setError(
-        err.response?.data?.error || "Couldn't create your account. Try again."
+        err.response?.data?.message || "Couldn't create your account. Try again."
       );
     } finally {
       setLoading(false);
