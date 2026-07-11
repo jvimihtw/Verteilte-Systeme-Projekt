@@ -5,4 +5,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 ENV DJANGO_SETTINGS_MODULE=budgetapp.settings
 EXPOSE 3002
-CMD ["python", "manage.py", "runserver", "0.0.0.0:3002"]
+CMD ["sh", "-c", "python manage.py makemigrations expenses && python manage.py migrate && python manage.py runserver 0.0.0.0:3002"]
