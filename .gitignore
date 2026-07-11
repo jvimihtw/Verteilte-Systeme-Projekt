@@ -1,7 +1,7 @@
 ## Node / NestJS
-/dist
-/node_modules
-/build
+dist/
+node_modules/
+build/
 .temp
 .tmp
 
