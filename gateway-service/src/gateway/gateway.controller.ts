@@ -1,74 +1,168 @@
-import { Controller, Get, Post, Body, Put, Param, Delete } from '@nestjs/common';
-import axios from 'axios';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Body,
+  Param,
+  Headers,
+  HttpException,
+} from '@nestjs/common';
+import axios, { AxiosError } from 'axios';
 
 // ── Service URLs ──────────────────────────────────────────────────────────────
-// In Docker, services talk to each other using their service name from
-// docker-compose.yml — NOT localhost. Localhost only works on your own machine.
 const SERVICES = {
-  users:         'http://user-service:3001',
-  expenses:      'http://expenses:3002',
-  budget:        'http://budget-service:3003',
+  users: 'http://user-service:3001',
+  expenses: 'http://expenses:3002',
+  budget: 'http://budget-service:3003',
   notifications: 'http://notifications-service:3004',
 };
 
+function forwardError(err: unknown): never {
+  const e = err as AxiosError;
+  throw new HttpException(
+    (e.response?.data as any) ?? 'Upstream service error',
+    e.response?.status ?? 500,
+  );
+}
+
 @Controller('api')
 export class GatewayController {
-
   // ── Budget endpoints ────────────────────────────────────────────────────────
   @Get('budgets')
-  async getBudgets() {
-    const response = await axios.get(`${SERVICES.budget}/budgets`);
-    return response.data;
+  async getBudgets(@Headers('authorization') authorization: string) {
+    try {
+      const response = await axios.get(`${SERVICES.budget}/budgets`, {
+        headers: { Authorization: authorization },
+      });
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   @Post('budgets')
-  async createBudget(@Body() body: any) {
-    const response = await axios.post(`${SERVICES.budget}/budgets`, body);
-    return response.data;
+  async createBudget(
+    @Body() body: any,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.post(`${SERVICES.budget}/budgets`, body, {
+        headers: { Authorization: authorization },
+      });
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   @Put('budgets/:id')
-  async updateBudget(@Param('id') id: string, @Body() body: any) {
-    const response = await axios.put(`${SERVICES.budget}/budgets/${id}`, body);
-    return response.data;
+  async updateBudget(
+    @Param('id') id: string,
+    @Body() body: any,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.put(
+        `${SERVICES.budget}/budgets/${id}`,
+        body,
+        { headers: { Authorization: authorization } },
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   // ── User endpoints ──────────────────────────────────────────────────────────
   @Get('users')
   async getUsers() {
-    const response = await axios.get(`${SERVICES.users}/users`);
-    return response.data;
+    try {
+      const response = await axios.get(`${SERVICES.users}/users`);
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   @Post('users')
   async createUser(@Body() body: any) {
-    const response = await axios.post(`${SERVICES.users}/users`, body);
-    return response.data;
+    try {
+      const response = await axios.post(`${SERVICES.users}/users`, body);
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   // ── Expenses endpoints ──────────────────────────────────────────────────────
   @Get('expenses')
-  async getExpenses() {
-    const response = await axios.get(`${SERVICES.expenses}/expenses/`);
-    return response.data;
+  async getExpenses(@Headers('authorization') authorization: string) {
+    try {
+      const response = await axios.get(`${SERVICES.expenses}/expenses/`, {
+        headers: { Authorization: authorization },
+      });
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   @Post('expenses')
-  async createExpense(@Body() body: any) {
-    const response = await axios.post(`${SERVICES.expenses}/expenses/`, body);
-    return response.data;
+  async createExpense(
+    @Body() body: any,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.post(
+        `${SERVICES.expenses}/expenses/`,
+        body,
+        { headers: { Authorization: authorization } },
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
+  }
+
+  @Delete('expenses/:id')
+  async deleteExpense(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.delete(
+        `${SERVICES.expenses}/expenses/${id}/`,
+        { headers: { Authorization: authorization } },
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   // ── Notifications endpoints ─────────────────────────────────────────────────
   @Get('notifications')
   async getNotifications() {
-    const response = await axios.get(`${SERVICES.notifications}/notifications`);
-    return response.data;
+    try {
+      const response = await axios.get(`${SERVICES.notifications}/notifications`);
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 
   @Post('notifications')
   async createNotification(@Body() body: any) {
-    const response = await axios.post(`${SERVICES.notifications}/notifications`, body);
-    return response.data;
+    try {
+      const response = await axios.post(
+        `${SERVICES.notifications}/notifications`,
+        body,
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
   }
 }

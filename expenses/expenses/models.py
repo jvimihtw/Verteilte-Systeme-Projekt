@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Expense(models.Model):
+    user_id = models.IntegerField()
     title = models.CharField(max_length=200)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.CharField(max_length=100, default="Other")
