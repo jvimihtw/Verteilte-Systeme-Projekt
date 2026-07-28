@@ -96,6 +96,33 @@ export class GatewayController {
     }
   }
 
+  // NEU: Login-Endpunkt leitet an den user-service weiter
+  @Post('login')
+  async loginUser(@Body() body: any) {
+    try {
+      const response = await axios.post(`${SERVICES.users}/login`, body);
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
+  }
+
+  // NEU: User löschen (falls im Frontend benötigt)
+  @Delete('users/:id')
+  async deleteUser(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.delete(`${SERVICES.users}/users/${id}`, {
+        headers: { Authorization: authorization },
+      });
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
+  }
+
   // ── Expenses endpoints ──────────────────────────────────────────────────────
   @Get('expenses')
   async getExpenses(@Headers('authorization') authorization: string) {
