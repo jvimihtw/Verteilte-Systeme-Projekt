@@ -48,6 +48,8 @@ export const createBudget = (budget) =>
 export const updateBudget = (id, budget) =>
   api.put(`/api/budgets/${id}`, budget).then((r) => r.data);
 
+export const deleteBudget = (id) =>
+  api.delete(`/api/budgets/${id}`).then((r) => r.data);
 // ── Notifications ────────────────────────────────────────────────────────────
 export const getNotifications = (userId) =>
   api

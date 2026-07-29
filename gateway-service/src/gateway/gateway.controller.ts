@@ -75,6 +75,22 @@ export class GatewayController {
     }
   }
 
+    @Delete('budgets/:id')
+  async deleteBudget(
+    @Param('id') id: string,
+    @Headers('authorization') authorization: string,
+  ) {
+    try {
+      const response = await axios.delete(
+        `${SERVICES.budget}/budgets/${id}`,
+        { headers: { Authorization: authorization } },
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
+  }
+
   // ── User endpoints ──────────────────────────────────────────────────────────
   @Get('users')
   async getUsers() {
