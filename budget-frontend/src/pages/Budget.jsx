@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import BudgetBar from "../components/BudgetBar";
-import { getBudgets, createBudget, getExpenses } from "../api/client";
+import {
+  getBudgets,
+  createBudget,
+  getExpenses,
+  notify,
+} from "../api/client";
 
 export default function Budget() {
   const [budgets, setBudgets] = useState([]);
@@ -41,8 +46,14 @@ export default function Budget() {
     try {
       await createBudget({
         category: category,
-        maxAmount: Number(limit)
+        maxAmount: Number(limit),
       });
+
+      // 🔔 Notify: a new budget was created
+      notify(
+        "BUDGET_CREATED",
+        `New budget set: ${category} — €${Number(limit).toFixed(2)}`,
+      );
 
       setLimit("");
       setShowForm(false);

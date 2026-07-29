@@ -13,10 +13,12 @@ import java.util.Optional;
 /**
  * Core business logic for the notifications service.
  *
- * Three notification types are handled:
- *  1. BUDGET_ALERT_80  – another service POSTs this when a user hits 80 % spend
- *  2. BUDGET_EXCEEDED  – another service POSTs this when a user surpasses budget
- *  3. WEEKLY_REMINDER  – automatically fired every Monday at 09:00 by the scheduler
+ * The frontend POSTs a notification whenever the user:
+ *   - creates / updates / deletes a budget
+ *   - creates / updates / deletes an expense
+ *   - crosses 70% / 90% / 100% of their total budget
+ *
+ * A weekly reminder is also fired automatically by the scheduler.
  */
 @Service
 public class NotificationService {
@@ -27,7 +29,7 @@ public class NotificationService {
         this.repository = repository;
     }
 
-    // ── Create from external request (budget-service / expenses-service) ─────
+    // ── Create from external request (frontend / other services) ─────────────
     public Notification create(NotificationRequest request) {
         String finalMessage = enrichMessage(request.getType(), request.getMessage());
 
@@ -66,17 +68,13 @@ public class NotificationService {
     // ── Weekly reminder scheduler ─────────────────────────────────────────────
     /**
      * Fires every Monday at 09:00.
-     * Cron format: second  minute  hour  day-of-month  month  day-of-week
-     *
-     * For testing purposes you can temporarily change the cron to run every
-     * 10 seconds:  "0/10 * * * * *"
+     * For quick testing, temporarily change the cron to "0/10 * * * * *"
+     * (every 10 seconds).
      */
     @Scheduled(cron = "0 0 9 * * MON")
     public void sendWeeklyExpenseReminder() {
         System.out.println("⏰  [Scheduler] Sending weekly expense upload reminders...");
 
-        // In a real app you would fetch all active userIds from the users-service.
-        // Here we simulate with a fixed list so the scheduler is self-contained.
         List<Long> activeUserIds = List.of(1L, 2L, 3L);
 
         for (Long userId : activeUserIds) {
@@ -84,7 +82,7 @@ public class NotificationService {
                     null,
                     NotificationType.WEEKLY_REMINDER,
                     userId,
-                    "📎 Weekly reminder: please upload your expenses for this week!"
+                    "Weekly reminder: please upload your expenses for this week!"
             );
             repository.save(reminder);
             System.out.printf("   → Reminder sent to userId=%d%n", userId);
@@ -94,14 +92,20 @@ public class NotificationService {
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Adds a friendly emoji prefix based on notification type if the caller
-     * didn't already include one.
+     * Adds a friendly emoji prefix based on notification type.
      */
     private String enrichMessage(NotificationType type, String original) {
         return switch (type) {
-            case BUDGET_ALERT_80 -> "⚠️  " + original;
-            case BUDGET_EXCEEDED -> "🚨  " + original;
-            case WEEKLY_REMINDER -> "📎  " + original;
+            case BUDGET_CREATED   -> "🟢  " + original;
+            case BUDGET_UPDATED   -> "✏️  " + original;
+            case BUDGET_DELETED   -> "🗑️  " + original;
+            case EXPENSE_CREATED  -> "💸  " + original;
+            case EXPENSE_UPDATED  -> "✏️  " + original;
+            case EXPENSE_DELETED  -> "🗑️  " + original;
+            case BUDGET_ALERT_70  -> "⚠️  " + original;
+            case BUDGET_ALERT_90  -> "⚠️  " + original;
+            case BUDGET_EXCEEDED  -> "🚨  " + original;
+            case WEEKLY_REMINDER  -> "📎  " + original;
         };
     }
 
