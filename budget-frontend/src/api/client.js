@@ -32,6 +32,10 @@ export const getExpenses = () => api.get("/api/expenses").then((r) => r.data);
 export const createExpense = (expense) =>
   api.post("/api/expenses", expense).then((r) => r.data);
 
+//edit
+export const updateExpense = (id, expense) =>
+  api.put(`/api/expenses/${id}`, expense).then((r) => r.data);
+
 export const deleteExpense = (id) =>
   api.delete(`/api/expenses/${id}`).then((r) => r.data);
 

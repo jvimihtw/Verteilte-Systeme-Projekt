@@ -141,6 +141,25 @@ export class GatewayController {
       forwardError(err);
     }
   }
+  #editanddelete
+
+    @Put('expenses/:id')
+  async updateExpense(@Param('id') id: string, @Body() body: any) {
+    const response = await axios.put(
+      `${SERVICES.expenses}/expenses/${id}/`,
+      body,
+    );
+    return response.data;
+  }
+
+  @Delete('expenses/:id')
+  async deleteExpense(@Param('id') id: string) {
+    const response = await axios.delete(
+      `${SERVICES.expenses}/expenses/${id}/`,
+    );
+    return response.data;
+  }
+
 
   // ── Notifications endpoints ─────────────────────────────────────────────────
   @Get('notifications')

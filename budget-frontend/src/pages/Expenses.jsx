@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
 import Layout from "../components/Layout";
-import { getExpenses, createExpense, deleteExpense } from "../api/client";
+import {
+  getExpenses,
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from "../api/client";
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("Groceries");
@@ -13,6 +20,7 @@ export default function Expenses() {
 
   async function loadExpenses() {
     setLoading(true);
+
     try {
       const result = await getExpenses();
       setExpenses(Array.isArray(result) ? result : result.data || []);
@@ -28,28 +36,80 @@ export default function Expenses() {
     loadExpenses();
   }, []);
 
-  async function handleAdd(e) {
-    e.preventDefault();
-    try {
-      await createExpense({
-        title,
-        amount: Number(amount),
-        category,
-        date: new Date().toISOString().split("T")[0],
-      });
+  function resetForm() {
+    setTitle("");
+    setAmount("");
+    setCategory("Groceries");
+    setEditingId(null);
+    setShowForm(false);
+  }
+
+  function handleAddClick() {
+    if (showForm) {
+      resetForm();
+    } else {
+      setEditingId(null);
       setTitle("");
       setAmount("");
-      setShowForm(false);
-      loadExpenses();
+      setCategory("Groceries");
+      setShowForm(true);
+    }
+  }
+
+  function handleEditClick(expense) {
+    setEditingId(expense.id);
+    setTitle(expense.title);
+    setAmount(expense.amount);
+    setCategory(expense.category);
+    setShowForm(true);
+    setErrorMsg("");
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const expenseData = {
+      title,
+      amount: Number(amount),
+      category,
+      date: new Date().toISOString().split("T")[0],
+    };
+
+    try {
+      if (editingId !== null) {
+        await updateExpense(editingId, expenseData);
+      } else {
+        await createExpense(expenseData);
+      }
+
+      resetForm();
+      await loadExpenses();
     } catch (err) {
-      setErrorMsg("Couldn't add the expense. Try again.");
+      setErrorMsg(
+        editingId !== null
+          ? "Couldn't edit the expense."
+          : "Couldn't add the expense.",
+      );
     }
   }
 
   async function handleDelete(id) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this expense?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       await deleteExpense(id);
-      loadExpenses();
+
+      if (editingId === id) {
+        resetForm();
+      }
+
+      await loadExpenses();
     } catch (err) {
       setErrorMsg("Couldn't delete the expense.");
     }
@@ -62,20 +122,26 @@ export default function Expenses() {
           <h1 className="page-title">Expenses</h1>
           <p className="page-subtitle">Every euro, accounted for</p>
         </div>
-        <button className="btn btn-primary" onClick={() => setShowForm(!showForm)}>
+
+        <button className="btn btn-primary" onClick={handleAddClick}>
           {showForm ? "Cancel" : "Add expense"}
         </button>
       </div>
 
       {errorMsg && (
-        <div className="card" style={{ marginBottom: 20, borderColor: "var(--rust)" }}>
-          <p style={{ margin: 0, color: "var(--rust)", fontSize: 14 }}>{errorMsg}</p>
+        <div
+          className="card"
+          style={{ marginBottom: 20, borderColor: "var(--rust)" }}
+        >
+          <p style={{ margin: 0, color: "var(--rust)", fontSize: 14 }}>
+            {errorMsg}
+          </p>
         </div>
       )}
 
       {showForm && (
         <div className="card" style={{ marginBottom: 20 }}>
-          <form onSubmit={handleAdd}>
+          <form onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="title">Title</label>
               <input
@@ -86,18 +152,21 @@ export default function Expenses() {
                 required
               />
             </div>
+
             <div className="field">
               <label htmlFor="amount">Amount (€)</label>
               <input
                 id="amount"
                 type="number"
                 step="0.01"
+                min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="0.00"
                 required
               />
             </div>
+
             <div className="field">
               <label htmlFor="category">Category</label>
               <select
@@ -112,8 +181,13 @@ export default function Expenses() {
                 <option>Other</option>
               </select>
             </div>
-            <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
-              Save expense
+
+            <button
+              type="submit"
+              className="btn btn-primary"
+              style={{ width: "100%" }}
+            >
+              {editingId !== null ? "Save changes" : "Save expense"}
             </button>
           </form>
         </div>
@@ -130,10 +204,14 @@ export default function Expenses() {
               <div className="list-row-main">
                 <div
                   className="row-icon"
-                  style={{ background: "var(--green-soft)", color: "var(--green)" }}
+                  style={{
+                    background: "var(--green-soft)",
+                    color: "var(--green)",
+                  }}
                 >
                   €
                 </div>
+
                 <div>
                   <p className="row-title">{expense.title}</p>
                   <p className="row-meta">
@@ -141,8 +219,26 @@ export default function Expenses() {
                   </p>
                 </div>
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <span className="row-amount">€{Number(expense.amount).toFixed(2)}</span>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+              >
+                <span className="row-amount">
+                  €{Number(expense.amount).toFixed(2)}
+                </span>
+
+                <button
+                  className="btn"
+                  style={{ padding: "5px 10px", fontSize: 12.5 }}
+                  onClick={() => handleEditClick(expense)}
+                >
+                  Edit
+                </button>
+
                 <button
                   className="btn"
                   style={{ padding: "5px 10px", fontSize: 12.5 }}
