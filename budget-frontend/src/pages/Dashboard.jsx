@@ -18,9 +18,9 @@ export default function Dashboard() {
           getBudgets().catch(() => ({ data: [] })),
           getNotifications().catch(() => ({ data: [] })),
         ]);
-        setExpenses(exp.data || []);
-        setBudgets(bud.data || []);
-        setNotifications(notif.data || []);
+        setExpenses(Array.isArray(exp) ? exp : exp.data || []);
+        setBudgets(Array.isArray(bud) ? bud : bud.data || []);
+        setNotifications(Array.isArray(notif) ? notif : notif.data || []);
       } catch (err) {
         setErrorMsg("Couldn't reach the gateway. Is docker compose running?");
       } finally {
@@ -31,7 +31,7 @@ export default function Dashboard() {
   }, []);
 
   const totalSpent = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-  const totalBudget = budgets.reduce((sum, b) => sum + Number(b.limit || 0), 0);
+  const totalBudget = budgets.reduce((sum, b) => sum + Number(b.maxAmount || 0), 0);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   return (
