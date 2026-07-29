@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login } from "../api/client";
 import { useAuth } from "../context/AuthContext";
@@ -8,14 +8,23 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Synchroner Lock gegen doppeltes Absenden (ignoriert Reacts Render-Delay)
+  const isSubmittingRef = useRef(false);
 
   const { loginUser } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(e) {
     e.preventDefault();
+    
+    // Sofortiger, synchroner Abbruch bei Mehrfachklick
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setError("");
     setLoading(true);
+
     try {
       const result = await login(email, password);
 
@@ -30,6 +39,8 @@ export default function Login() {
       setError(
         err.response?.data?.message || "Couldn't sign in. Check your details and try again."
       );
+      // Nur bei einem Fehler den Lock wieder freigeben, damit man es erneut versuchen kann
+      isSubmittingRef.current = false;
     } finally {
       setLoading(false);
     }

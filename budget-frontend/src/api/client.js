@@ -4,7 +4,7 @@ import { showToast } from "../context/ToastContext";
 // All requests go through the gateway, which forwards to the right service.
 // Gateway runs on port 3000 — see gateway-service/src/gateway/gateway.controller.ts
 const GATEWAY_URL = "http://localhost:3000";
-const USER_SERVICE_URL = "http://localhost:3001";
+// deletet - const USER_SERVICE_URL = "http://localhost:3001";
 
 const api = axios.create({
   baseURL: GATEWAY_URL,
@@ -20,12 +20,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Auth / Users ────────────────────────────────────────────────────────────
+// ── NEW Auth / Users ────────────────────────────────────────────────────────────
 export const login = (email, password) =>
-  axios.post(`${USER_SERVICE_URL}/login`, { email, password }).then((r) => r.data);
+  api.post("/api/login", { email, password }).then((r) => r.data);
 
 export const register = (name, email, password) =>
-  axios.post(`${USER_SERVICE_URL}/users`, { name, email, password }).then((r) => r.data);
+  api.post("/api/users", { name, email, password }).then((r) => r.data);
 
 // ── Expenses ─────────────────────────────────────────────────────────────────
 export const getExpenses = () => api.get("/api/expenses").then((r) => r.data);
@@ -49,6 +49,8 @@ export const createBudget = (budget) =>
 export const updateBudget = (id, budget) =>
   api.put(`/api/budgets/${id}`, budget).then((r) => r.data);
 
+export const deleteBudget = (id) =>
+  api.delete(`/api/budgets/${id}`).then((r) => r.data);
 // ── Notifications ────────────────────────────────────────────────────────────
 export const getNotifications = (userId) =>
   api

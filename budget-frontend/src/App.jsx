@@ -10,8 +10,12 @@ import Notifications from "./pages/Notifications";
 
 function PrivateRoute({ children }) {
   const { user } = useAuth();
-  // Note: for the exercise we let pages render even without a logged-in user,
-  // since the user-service login flow may still be a work in progress.
+  
+  // Wenn kein Nutzer eingeloggt ist, zum Login umleiten
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
   return children;
 }
 

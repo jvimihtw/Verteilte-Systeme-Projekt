@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpException,
   HttpStatus,
@@ -21,6 +22,7 @@ export class BudgetController {
 
   private getUserIdFromToken(req: express.Request): number {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new HttpException(
         'Missing or invalid Authorization token',
@@ -29,11 +31,13 @@ export class BudgetController {
     }
 
     const token = authHeader.split(' ')[1];
+
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as {
         id: number;
         email: string;
       };
+
       return decoded.id;
     } catch {
       throw new HttpException(
@@ -66,5 +70,14 @@ export class BudgetController {
   ) {
     const userId = this.getUserIdFromToken(req);
     return this.budgetService.update(Number(id), userId, body);
+  }
+
+  @Delete(':id')
+  remove(
+    @Req() req: express.Request,
+    @Param('id') id: string,
+  ) {
+    const userId = this.getUserIdFromToken(req);
+    return this.budgetService.remove(Number(id), userId);
   }
 }
