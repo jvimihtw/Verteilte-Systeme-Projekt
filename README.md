@@ -1,116 +1,177 @@
-<<<<<<< HEAD
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Verteilte Systeme Projekt — Budget App
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A microservices-based budget tracking application built for the *Verteilte Systeme* course at HTW Berlin. The application lets users manage budgets and expenses, receive notifications when they approach or exceed their spending limits, and view everything through a single React frontend.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The project demonstrates a full microservices architecture: independent services written in **different technologies**, each running in its own Docker container, communicating over HTTP through a central **API Gateway**, and orchestrated with a single `docker compose up`.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Architecture
 
-## Project setup
-
-```bash
-$ npm install
+```
+                        ┌─────────────────────┐
+                        │   React Frontend    │
+                        │   (Vite, port 5173) │
+                        └──────────┬──────────┘
+                                   │  HTTP
+                        ┌──────────▼──────────┐
+                        │   Gateway Service   │
+                        │  (NestJS, port 3000)│
+                        └──────────┬──────────┘
+             ┌───────────┬─────────┼─────────┬───────────────┐
+             │           │         │         │               │
+     ┌───────▼──┐ ┌──────▼───┐ ┌───▼─────┐ ┌─▼─────────────┐ │
+     │  User    │ │ Expenses │ │ Budget  │ │ Notifications │ │
+     │ Service  │ │ Service  │ │ Service │ │   Service     │ │
+     │ (Node)   │ │ (Django) │ │(NestJS) │ │ (Spring Boot) │ │
+     │  :3001   │ │  :3002   │ │  :3003  │ │    :3004      │ │
+     └────┬─────┘ └──────────┘ └────┬────┘ └───────────────┘ │
+          │                         │                         │
+          └─────────────┬───────────┘                         │
+                        │                                     │
+                  ┌─────▼──────┐                              │
+                  │ PostgreSQL │◄─────────────────────────────┘
+                  │   :5433    │
+                  └────────────┘
 ```
 
-## Compile and run the project
+The frontend only ever talks to the gateway. The gateway forwards each request to the responsible service. Services do not call each other directly — the frontend coordinates cross-service actions (for example, firing a notification after an expense is created).
+
+---
+
+## Services
+
+| Service | Technology | Port | Database | Description |
+|---|---|---|---|---|
+| **gateway-service** | NestJS (TypeScript) | 3000 | — | Single entry point. Routes requests to the correct service. |
+| **user-service** | Node.js (Express) | 3001 | PostgreSQL (`userdb`) | User accounts, registration, and login. |
+| **expenses** | Django (Python) | 3002 | SQLite | Create, list, edit, and delete expenses. |
+| **budget-service** | NestJS + Prisma | 3003 | PostgreSQL (`budgetdb`) | Create, list, edit, and delete budgets. |
+| **notifications-service** | Spring Boot (Java) | 3004 | In-memory | Stores and serves notifications; sends a weekly reminder. |
+| **postgres** | PostgreSQL 16 | 5433 | — | Shared database server for user and budget services. |
+| **frontend** | React + Vite | 5173 | — | User interface for the whole application. |
+
+---
+
+## Prerequisites
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
+- [Node.js](https://nodejs.org/) 20+ (only needed to run the frontend locally)
+
+---
+
+## Running the project
+
+### 1. Start all backend services
+
+From the project root:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+docker compose up --build
 ```
 
-## Run tests
+This builds and starts all five services plus PostgreSQL. The first run takes a few minutes while images are built. The system is ready when each service logs a "started" message and the output goes quiet.
+
+### 2. First-time database setup
+
+Some services need their database initialised the first time you run the project:
 
 ```bash
-# unit tests
-$ npm run test
+# Create the user database (if it doesn't exist yet)
+docker compose exec postgres psql -U postgres -c "CREATE DATABASE userdb;"
 
-# e2e tests
-$ npm run test:e2e
+# Apply Django migrations for the expenses service
+docker compose exec expenses python manage.py migrate
 
-# test coverage
-$ npm run test:cov
+# Resolve the Prisma migration for the budget service
+docker compose run --rm budget-service npx prisma migrate resolve --applied 20260511191933_init
 ```
 
-## Deployment
+### 3. Start the frontend
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+In a separate terminal:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cd budget-frontend
+npm install
+npm run dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+Open the URL Vite prints (usually `http://localhost:5173`) in your browser.
 
-## Resources
+---
 
-Check out a few resources that may come in handy when working with NestJS:
+## API Gateway routes
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+All routes are prefixed with `/api` and served from `http://localhost:3000`.
 
-## Support
+### Budgets
+| Method | Route | Forwards to |
+|---|---|---|
+| GET | `/api/budgets` | budget-service |
+| POST | `/api/budgets` | budget-service |
+| PUT | `/api/budgets/:id` | budget-service |
+| DELETE | `/api/budgets/:id` | budget-service |
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Expenses
+| Method | Route | Forwards to |
+|---|---|---|
+| GET | `/api/expenses` | expenses |
+| POST | `/api/expenses` | expenses |
+| PUT | `/api/expenses/:id` | expenses |
+| DELETE | `/api/expenses/:id` | expenses |
 
-## Stay in touch
+### Users
+| Method | Route | Forwards to |
+|---|---|---|
+| GET | `/api/users` | user-service |
+| POST | `/api/users` | user-service |
+| POST | `/api/login` | user-service |
+| DELETE | `/api/users/:id` | user-service |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Notifications
+| Method | Route | Forwards to |
+|---|---|---|
+| GET | `/api/notifications` | notifications-service |
+| POST | `/api/notifications` | notifications-service |
+| PATCH | `/api/notifications/:id/read` | notifications-service |
 
-## License
+---
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
-=======
-# Verteilte Systeme Projekt
+## Notifications
 
-## Notifications Service (Spring Boot)
-Microservice for managing notifications. Runs on port 3004.
+The notifications service stores notifications and serves them to the frontend. Notifications are triggered by user actions and by spending thresholds:
 
-### Run
-```bash
-./mvnw spring-boot:run
+| Type | When it fires |
+|---|---|
+| `BUDGET_CREATED` | A new budget is created |
+| `BUDGET_UPDATED` | A budget is edited |
+| `BUDGET_DELETED` | A budget is deleted |
+| `EXPENSE_CREATED` | A new expense is added |
+| `EXPENSE_UPDATED` | An expense is edited |
+| `EXPENSE_DELETED` | An expense is deleted |
+| `BUDGET_ALERT_70` | Total spending reaches 70% of the total budget |
+| `BUDGET_ALERT_90` | Total spending reaches 90% of the total budget |
+| `BUDGET_EXCEEDED` | Total spending reaches or exceeds 100% of the total budget |
+| `WEEKLY_REMINDER` | Automatic weekly reminder to upload expenses (Mondays 09:00) |
+
+Threshold alerts only fire when a boundary is *crossed*, so the user is not notified repeatedly. Notifications appear both as live pop-ups (toasts) in the app and on the Notifications page, where they can be marked as read.
+
+---
+
+## Project structure
+
+```
+Verteilte-Systeme-Projekt/
+├── docker-compose.yml          ← orchestrates all services
+├── README.md
+│
+├── gateway-service/            ← NestJS API gateway
+├── user-service/               ← Node.js user service
+├── expenses/                   ← Django expenses service
+├── budget-service/             ← NestJS + Prisma budget service
+├── notifications-service/      ← Spring Boot notifications service
+└── budget-frontend/            ← React + Vite frontend
 ```
 
-### Endpoints
-- `GET /notifications` — list all notifications
-- `POST /notifications` — create a notification
-- `PATCH /notifications/{id}/read` — mark as read
-- `GET /health` — health check
->>>>>>> origin/main
+---
