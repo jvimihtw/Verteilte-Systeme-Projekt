@@ -5,6 +5,9 @@ import {
   createExpense,
   updateExpense,
   deleteExpense,
+  getBudgets,
+  notify,
+  checkThresholds,
 } from "../api/client";
 
 export default function Expenses() {
@@ -65,6 +68,11 @@ export default function Expenses() {
     setErrorMsg("");
   }
 
+  // Sum a list of expenses
+  function sumExpenses(list) {
+    return list.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -78,12 +86,36 @@ export default function Expenses() {
     try {
       if (editingId !== null) {
         await updateExpense(editingId, expenseData);
+        // 🔔 Notify: expense edited
+        notify("EXPENSE_UPDATED", `Expense updated: ${title} — €${Number(amount).toFixed(2)}`);
+        resetForm();
+        await loadExpenses();
       } else {
-        await createExpense(expenseData);
-      }
+        // Work out spend % before and after, so we can alert on threshold crossings.
+        const budgetsResp = await getBudgets().catch(() => []);
+        const budgets = Array.isArray(budgetsResp) ? budgetsResp : budgetsResp.data || [];
+        const totalBudget = budgets.reduce(
+          (sum, b) => sum + Number(b.maxAmount || 0),
+          0,
+        );
 
-      resetForm();
-      await loadExpenses();
+        const spentBefore = sumExpenses(expenses);
+        const spentAfter = spentBefore + Number(amount);
+
+        await createExpense(expenseData);
+        // 🔔 Notify: expense created
+        notify("EXPENSE_CREATED", `New expense: ${title} — €${Number(amount).toFixed(2)}`);
+
+        // 🔔 Notify: threshold crossings (only fires when a boundary is passed)
+        if (totalBudget > 0) {
+          const prevPct = (spentBefore / totalBudget) * 100;
+          const newPct = (spentAfter / totalBudget) * 100;
+          checkThresholds(prevPct, newPct);
+        }
+
+        resetForm();
+        await loadExpenses();
+      }
     } catch (err) {
       setErrorMsg(
         editingId !== null
@@ -103,7 +135,16 @@ export default function Expenses() {
     }
 
     try {
+      const removed = expenses.find((e) => e.id === id);
       await deleteExpense(id);
+
+      // 🔔 Notify: expense deleted
+      notify(
+        "EXPENSE_DELETED",
+        removed
+          ? `Expense deleted: ${removed.title} — €${Number(removed.amount).toFixed(2)}`
+          : "An expense was deleted.",
+      );
 
       if (editingId === id) {
         resetForm();

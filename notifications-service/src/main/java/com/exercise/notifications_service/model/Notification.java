@@ -5,17 +5,30 @@ import java.time.LocalDateTime;
 /**
  * Represents a single notification stored in memory.
  *
- * NotificationType drives the business logic:
- *   BUDGET_ALERT_80    → user reached 80 % of their budget
- *   BUDGET_EXCEEDED    → user has surpassed their budget
- *   WEEKLY_REMINDER    → weekly prompt to upload expenses
+ * NotificationType drives the business logic. The frontend sends the matching
+ * type whenever the user performs a budget/expense action or crosses a spend
+ * threshold.
  */
 public class Notification {
 
     // ── Possible types ──────────────────────────────────────────────────────
     public enum NotificationType {
-        BUDGET_ALERT_80,
+        // Budget lifecycle
+        BUDGET_CREATED,
+        BUDGET_UPDATED,
+        BUDGET_DELETED,
+
+        // Expense lifecycle
+        EXPENSE_CREATED,
+        EXPENSE_UPDATED,
+        EXPENSE_DELETED,
+
+        // Spend thresholds (percentage of total budget used)
+        BUDGET_ALERT_70,
+        BUDGET_ALERT_90,
         BUDGET_EXCEEDED,
+
+        // Scheduler
         WEEKLY_REMINDER
     }
 

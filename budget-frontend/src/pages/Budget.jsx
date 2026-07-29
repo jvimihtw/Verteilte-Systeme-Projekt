@@ -7,6 +7,7 @@ import {
   updateBudget,
   deleteBudget,
   getExpenses,
+  notify,
 } from "../api/client";
 
 export default function Budget() {
@@ -24,10 +25,7 @@ export default function Budget() {
     setLoading(true);
 
     try {
-      const [bud, exp] = await Promise.all([
-        getBudgets(),
-        getExpenses(),
-      ]);
+      const [bud, exp] = await Promise.all([getBudgets(), getExpenses()]);
 
       setBudgets(Array.isArray(bud) ? bud : bud.data || []);
       setExpenses(Array.isArray(exp) ? exp : exp.data || []);
@@ -77,10 +75,9 @@ export default function Budget() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-        const duplicateBudget = budgets.some(
-      (budget) =>
-        budget.category === category &&
-        budget.id !== editingId,
+
+    const duplicateBudget = budgets.some(
+      (budget) => budget.category === category && budget.id !== editingId,
     );
 
     if (duplicateBudget) {
@@ -96,8 +93,18 @@ export default function Budget() {
     try {
       if (editingId !== null) {
         await updateBudget(editingId, budgetData);
+        // 🔔 Notify: a budget was edited
+        notify(
+          "BUDGET_UPDATED",
+          `Budget updated: ${category} — €${Number(limit).toFixed(2)}`,
+        );
       } else {
         await createBudget(budgetData);
+        // 🔔 Notify: a new budget was created
+        notify(
+          "BUDGET_CREATED",
+          `New budget set: ${category} — €${Number(limit).toFixed(2)}`,
+        );
       }
 
       resetForm();
@@ -121,7 +128,16 @@ export default function Budget() {
     }
 
     try {
+      const removed = budgets.find((b) => b.id === id);
       await deleteBudget(id);
+
+      // 🔔 Notify: a budget was deleted
+      notify(
+        "BUDGET_DELETED",
+        removed
+          ? `Budget deleted: ${removed.category}`
+          : "A budget was deleted.",
+      );
 
       if (editingId === id) {
         resetForm();
@@ -138,15 +154,10 @@ export default function Budget() {
       <div className="page-header">
         <div>
           <h1 className="page-title">Budget</h1>
-          <p className="page-subtitle">
-            Set limits, watch them in real time
-          </p>
+          <p className="page-subtitle">Set limits, watch them in real time</p>
         </div>
 
-        <button
-          className="btn btn-primary"
-          onClick={handleNewBudgetClick}
-        >
+        <button className="btn btn-primary" onClick={handleNewBudgetClick}>
           {showForm ? "Cancel" : "New budget"}
         </button>
       </div>
@@ -290,10 +301,7 @@ export default function Budget() {
                   </div>
                 </div>
 
-                <BudgetBar
-                  spent={spent}
-                  limit={Number(budget.maxAmount)}
-                />
+                <BudgetBar spent={spent} limit={Number(budget.maxAmount)} />
               </div>
             );
           })}

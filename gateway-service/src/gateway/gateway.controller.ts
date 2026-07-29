@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -220,6 +221,18 @@ export class GatewayController {
       const response = await axios.post(
         `${SERVICES.notifications}/notifications`,
         body,
+      );
+      return response.data;
+    } catch (err) {
+      forwardError(err);
+    }
+  }
+
+  @Patch('notifications/:id/read')
+  async markNotificationRead(@Param('id') id: string) {
+    try {
+      const response = await axios.patch(
+        `${SERVICES.notifications}/notifications/${id}/read`,
       );
       return response.data;
     } catch (err) {
