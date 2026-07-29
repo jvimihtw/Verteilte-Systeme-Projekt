@@ -66,7 +66,7 @@ def expense_list(request):
 
 
 @csrf_exempt
-@require_http_methods(["DELETE"])
+@require_http_methods(["PUT", "PATCH", "DELETE"])
 def expense_detail(request, expense_id):
     user_id, error_response = get_user_id_from_token(request)
     if error_response:
@@ -74,7 +74,37 @@ def expense_detail(request, expense_id):
 
     try:
         expense = Expense.objects.get(id=expense_id, user_id=user_id)
-        expense.delete()
-        return JsonResponse({"service": "expenses", "deleted": expense_id}, status=200)
     except Expense.DoesNotExist:
         return JsonResponse({"error": "Expense not found"}, status=404)
+
+    if request.method == "DELETE":
+        expense.delete()
+        return JsonResponse(
+            {"service": "expenses", "deleted": expense_id},
+            status=200,
+        )
+
+    try:
+        body = json.loads(request.body)
+
+        if "title" in body:
+            expense.title = body["title"]
+
+        if "amount" in body:
+            expense.amount = body["amount"]
+
+        if "category" in body:
+            expense.category = body["category"]
+
+        if "date" in body:
+            expense.date = body["date"]
+
+        expense.save()
+
+        return JsonResponse(
+            {"service": "expenses", "data": expense_to_dict(expense)},
+            status=200,
+        )
+
+    except (json.JSONDecodeError, ValueError, TypeError) as error:
+        return JsonResponse({"error": str(error)}, status=400)
