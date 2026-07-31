@@ -20,7 +20,7 @@ export default function Sidebar() {
   return (
     <nav className="sidebar">
       <div className="sidebar-brand">
-        Ledger<span>.</span>
+        CountME<span></span>
       </div>
 
       {links.map((link) => (

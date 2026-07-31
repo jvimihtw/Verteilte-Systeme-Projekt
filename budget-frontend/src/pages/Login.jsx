@@ -50,7 +50,7 @@ export default function Login() {
     <div className="auth-shell">
       <div className="auth-card">
         <h1 className="auth-title">Welcome back</h1>
-        <p className="auth-subtitle">Sign in to your ledger</p>
+        <p className="auth-subtitle">Sign into CountME</p>
 
         <form onSubmit={handleSubmit}>
           <div className="field">

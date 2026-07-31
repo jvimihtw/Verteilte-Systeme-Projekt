@@ -1,6 +1,6 @@
-# Ledger — Budget App Frontend (React + Vite)
+# Budget App Frontend (React + Vite)
 
-A clean, ledger-inspired UI for the Budget App. Connects to your **gateway-service** on `http://localhost:3000`.
+A clean UI for the Budget App. Connects to your **gateway-service** on `http://localhost:3000`.
 
 ## Pages
 - **Login / Register** — uses `user-service` via the gateway
@@ -41,7 +41,7 @@ frontend:
 
 ## Design notes
 
-The visual language is intentionally "ledger" — warm paper background, serif headings, and monospace numbers so amounts align like a real account book. The budget bar fills green → amber → rust as spending approaches and crosses the limit, giving an at-a-glance read on financial health.
+The interface follows a modern and minimal visual language, combining consistent typography, generous spacing, and subtle colors to improve readability and usability. The budget bar changes from green to amber to rust as spending increases, allowing users to quickly understand how close they are to their budget limit.
 
 ## Connecting to your gateway
 
