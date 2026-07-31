@@ -13,9 +13,9 @@
   --amber: #93661f;
   --amber-soft: #f5ecd9;
 
-  --font-display: "Source Serif 4", serif;
-  --font-ui: "Inter", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", monospace;
+    --font-display: "Bricolage Grotesque", sans-serif;
+    --font-ui: "Bricolage Grotesque", sans-serif;
+    --font-mono: "Bricolage Grotesque", sans-serif;
 }
 
 * {
@@ -58,8 +58,8 @@ button {
 
 .sidebar-brand {
   font-family: var(--font-display);
-  font-size: 22px;
-  font-weight: 600;
+  font-size: 25px;
+  font-weight: 700;
   margin-bottom: 36px;
   letter-spacing: -0.01em;
 }
@@ -74,7 +74,7 @@ button {
   gap: 10px;
   padding: 9px 12px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-soft);
   margin-bottom: 2px;
   transition: background 0.12s ease, color 0.12s ease;
@@ -122,8 +122,8 @@ button {
 
 .page-title {
   font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 600;
+  font-size: 32px;
+  font-weight: 700;
   margin: 0;
 }
 
@@ -238,7 +238,7 @@ button {
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
 .btn {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   padding: 9px 16px;
   border-radius: 7px;
   border: 1px solid var(--line-strong);
@@ -270,7 +270,7 @@ button {
 .field label {
   display: block;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 6px;
   color: var(--ink-soft);
 }
@@ -336,8 +336,8 @@ button {
 
 .auth-title {
   font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   margin: 0 0 6px;
 }
 
